@@ -1,0 +1,163 @@
+---
+title: "Bike Sharing Demand Predictions"
+author: "Akhila Masadi"
+date: "15/06/2022"
+output: 
+  word_document: default
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+```
+
+## Summary
+
+In the urban transportation systems, bike sharing has increasingly become a popular part. In ensuring service efficiency and supporting timely re-balancing, there needs to have accurate demand prediction. However, there has been a challenge of balancing the demand of bike sharing for different regions.It is needed to know the number of bikes needed in each station at a given time to help in ensuring the demand is met at all times for customer satisfaction. This is because at times there are few bikes than the demand and at other stations there are more than enough bikes than what is demanded. Therefore, this project intends to predict on bike sharing demand and ensure there is a balance of bikes available and demand for each station. This will be dependent on various factors like precipitation, day of the week, season, hour of the day, and weather conditions. The project implements the Decision Tree and Random Forest models for the predictions in R language. From this, the most accurate model to provide efficient and effective predictions was identified as Random Forest which could be used for accurate bike sharing demand prediction. The dataset will be retrieved from the UCI Machine Learning database. 
+## Introduction
+It is always difficult for the bike sharing systems to determine the stations which require a large number of bikes and stations that require less number of bikes. However, in the case where there is bike sharing demand prediction, the bike sharing companies are able to easily predict number of bikes that are to be required through the utilization of the available data. Therefore, this paper performs analysis and visualization of data to clearly illustrate the most stations with a higher demand of bikes. With fast prediction for this project, it will be easier to avoid uneven bike distribution with a high accuracy. Factors like climate details from the available data will be useful in analyzing and predicting number of bikes on demand.
+
+## Literature Review
+
+The prediction on the bike sharing demand has been an interesting topic for many researchers. The prediction of bike sharing demand include the creating of predictive models that are essential performing the evaluation of the probability of requests for the bikes in a give area dependent on historical data and information from previous studies. Tong et al. (2017) implements a statistical model used in the prediction of the number of bikes rented every hour by putting into consideration climate conditions, time information on the days of the week, and event of holidays. Dell'Olio et al. (2011) implemented a method that was essential in the assessment of potential demand to help in determining the drop off and pick up stations by the use of GIS. In addition, Poisson model was also created to help in considering the effects that climate conditions and calendar events have on number of bikes on demand. 
+As identified in a number of research studies reviewed in this paper, there is less research performed on the demand for public sharing demand of bikes. Therefore, in this paper, analysis and prediction on public bike sharing demand by use of data mining techniques and Machine Learning techniques like Decision Tree and Random Forest algorithms will be put in place. 
+
+## Theory
+
+H1: There is a lower demand of bikes when the temperatures are high compared to cold temperatures. 
+
+H2: The demand for bikes varies for different seasons.
+
+```{r}
+#install.packages("xtable")
+library(ggplot2)
+library(dplyr)
+library(randomForest)
+library(lubridate)
+library(xtable)
+```
+
+
+## Data
+
+The data was retrieved from https://www.kaggle.com/datasets/bvc5283/Bike_Shared_Data/download
+
+
+
+```{r echo=FALSE}
+Bike_Shared_Data <- read.csv("C:/Users/User/Downloads/bikeshare.csv")
+head(Bike_Shared_Data)
+```
+Check for missing values in the dataset. 
+
+```{r}
+sum(is.na(Bike_Shared_Data))
+```
+There are no missing values. 
+Next, from the datetime column a column named hour has been created.
+
+```{r}
+Bike_Shared_Data$hour <- hour(ymd_hms(Bike_Shared_Data$datetime))
+head(Bike_Shared_Data)
+```
+
+
+
+## Methodology
+
+Since the dataset is clean, we start working on the Bike_Shared_Data dataset. 
+The first thing is to perform an Exploratory Data Analysis on the Bike_Shared_Data dataset. 
+
+The first thing involve checking whether there is a relationship between the number of bikes rented and temperature.
+
+```{r}
+ggplot(data = Bike_Shared_Data, aes(temp,count)) + geom_point(alpha = 0.3, aes(color = temp)) + theme_bw()
+
+```
+
+Next was to identify if there is any correlation between temperature and count of bikes rented. 
+
+```{r}
+cor(Bike_Shared_Data[,c('temp','count')])
+
+```
+Distribution of bikes count and season
+
+
+```{r}
+ggplot(Bike_Shared_Data,aes(factor(season),count)) + geom_boxplot(aes(color = factor(season))) + theme_bw()
+```
+
+Next is the analysis on the relationship between hour of working day and count of rented bikes. 
+
+```{r}
+plot_1 <- ggplot(filter(Bike_Shared_Data,workingday == 1), aes(hour,count))
+plot_1 <- plot_1+ geom_point()
+print(plot_1)
+
+```
+
+Next, was the analysis for the relationship between hour of non-working day and count of rented bikes. 
+
+```{r}
+plot_2 <- ggplot(filter(Bike_Shared_Data,workingday == 0), aes(hour,count))
+plot_2 <- plot_2+ geom_point()
+#plot_2 <- plot_2 + geom_point(position=position_jitter(w=1,h=0),aes(color = temp),alpah=0.5)
+print(plot_2 + theme_bw())
+```
+
+To predict count of rented bikes in regards to the temp variable, a model has been created.
+
+```{r}
+temp_model <- lm(count ~. - datetime - atemp, Bike_Shared_Data)
+print(summary(temp_model))
+```
+
+## Results
+
+From the analysis above, we were able to identify that there is an increase in count of rented bikes with increase in temperature. 
+
+```{r echo=FALSE}
+ggplot(data = Bike_Shared_Data, aes(temp,count)) + geom_point(alpha = 0.3, aes(color = temp)) + theme_bw()
+
+```
+
+There are more bikes rented in winter compared to spring. 
+
+
+```{r echo=FALSE}
+ggplot(Bike_Shared_Data,aes(factor(season),count)) + geom_boxplot(aes(color = factor(season))) + theme_bw()
+
+```
+
+There is an increase in the count of rented bikes in the evening hours and morning hours, that is around 5PM and 8 AM respectively. 
+
+```{r echo=FALSE}
+print(plot_1)
+```
+
+During non working days, less bikes are rented in the morning hours but after noon the number increases. 
+
+
+```{r echo=FALSE}
+print(plot_2 + theme_bw())
+
+```
+
+## Implications
+
+From the results in this project, it is clear that the model did not provide a time series analysis given the nature of the data. Therefore, I would recommend a model that can fully account for this dataset especially in the case where the dataset might keep on growing. 
+
+## Conclusion
+
+From the analysis and results of this project, the theory, there is a lower demand of bikes when the temperatures are high compared to cold temperatures, is not true. There is a higher demand for bikes in the time where temperatures are higher and lower demand for bikes when temperatures are lower. In addition, the demand for bikes varies with seasons. This is identified from the project since th.ere are more bikes rented in winter compared to spring
+
+## References
+
+Dell'Olio, L., Ibeas, A., & Moura, J. L. (2011, June). Implementing bike-sharing systems. 	In Proceedings of the Institution of Civil Engineers-Municipal Engineer (Vol. 164, No. 2, 	pp. 89-101). Thomas Telford Ltd.
+
+Eren, E., & Uz, V. E. (2020). A review on bike-sharing: The factors affecting bike-sharing 	demand. Sustainable Cities and Society, 54, 101882.
+
+Tong, Y., Chen, Y., Zhou, Z., Chen, L., Wang, J., Yang, Q., ... & Lv, W. (2017, August). The simpler the better: a unified approach to predicting original taxi demands based on large-scale online platforms. In Proceedings of the 23rd ACM SIGKDD international conference on knowledge discovery and data mining (pp. 1653-1662).
+
